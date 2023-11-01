@@ -8,81 +8,80 @@
 #include <cmath>
 #include "math_Integer.h"
 
-std::map<std::string, std::vector<std::pair<std::string, int>>> dataMap;
+std::map<std::string, std::vector<std::pair<std::string, int>>> dados;
+std::map<std::string, math::Integer> resultados;
 
-math::Integer hidrogenio(std::vector<std::pair<std::string, int>> values) {
-    math::Integer hidro = 0;
-    for (auto item : values) {
+math::Integer calculateHidrogenio(const std::string& elemento) {
+
+    if (resultados.find(elemento) != resultados.end()) {
+        return resultados[elemento];
+    }
+
+    math::Integer total = 0;
+    for (auto item : dados[elemento]) {
         if (item.first == "hidrogenio") {
-            hidro += item.second;
+            total += item.second;
         }
         else {
-            hidro += item.second * hidrogenio(dataMap[item.first]);
+            total += item.second * calculateHidrogenio(item.first);
         }
-
     }
-    return hidro;
+
+    resultados[elemento] = total;
+    return total;
 }
 
-
 int main() {
-    std::string filename = "casoc240.txt";
 
+    std::ifstream file("./casoc360.txt");
+    std::string line;
 
-    std::ifstream inputFile(filename);
-
-    if (!inputFile) {
+    if (!file) {
         std::cerr << "Erro ao abrir o arquivo." << std::endl;
         return 1;
     }
 
-    std::string line;
-
     auto start = std::chrono::high_resolution_clock::now();
 
-    while (std::getline(inputFile, line)) {
+    while (std::getline(file, line)) {
         std::istringstream ss(line);
 
-        std::vector<std::pair<std::string, int>> values;
-        std::string quantity;
-        std::string element;
+        std::vector<std::pair<std::string, int>> custos;
+        std::string quantidade;
+        std::string elemento;
 
         while (1) {
-            if (!(ss >> quantity)) {
+            if (!(ss >> quantidade)) {
                 break;
             }
 
-            if (quantity != "->") {
-                if (!(ss >> element)) {
+            if (quantidade != "->") {
+                if (!(ss >> elemento)) {
                     break;
                 }
-                values.push_back(std::make_pair(element, std::stoi(quantity)));
-
+                custos.push_back(std::make_pair(elemento, std::stoi(quantidade)));
             }
-            else if (!(ss >> quantity >> element)) {
+            else if (!(ss >> quantidade >> elemento)) {
                 break;
             }
-
-
         }
 
-        auto it = dataMap.find(element);
+        auto it = dados.find(elemento);
 
-        if (it == dataMap.end()) {
-            dataMap[element] = values;
+        if (it == dados.end()) {
+            dados[elemento] = custos;
         }
         else {
-            it->second.insert(it->second.end(), values.begin(), values.end());
+            it->second.insert(it->second.end(), custos.begin(), custos.end());
         }
-
     }
 
-    std::cout << hidrogenio(dataMap["ouro"]);
+    math::Integer result = calculateHidrogenio("ouro");
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 
-    std::cout << "\n\n" << std::fixed << std::setprecision(1) << duration.count() << " segundos." << std::endl;
+    std::cout << result << "\n\n" << std::fixed << std::setprecision(1) << duration.count() << " segundos." << std::endl;
 
     return 0;
 }
