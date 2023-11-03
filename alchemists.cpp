@@ -8,80 +8,89 @@
 #include <cmath>
 #include "math_Integer.h"
 
+/*
+Lógica do algoritmo:
+Para saber a quantidade de hidrogênios para formar o ouro, precisa-se da quantidade de hidrogênio de cada filho do ouro somado
+multiplicado pela quantidade do elemento.
+*/
+
 std::map<std::string, std::vector<std::pair<std::string, int>>> dados;
 std::map<std::string, math::Integer> resultados;
+math::Integer calculoHidrogenio(const std::string& elemento) {
 
-math::Integer calculateHidrogenio(const std::string& elemento) {
+	if (resultados.find(elemento) != resultados.end()) {
+		return resultados[elemento];
+	}
 
-    if (resultados.find(elemento) != resultados.end()) {
-        return resultados[elemento];
-    }
+	math::Integer total = 0;
 
-    math::Integer total = 0;
-    for (auto item : dados[elemento]) {
-        if (item.first == "hidrogenio") {
-            total += item.second;
-        }
-        else {
-            total += item.second * calculateHidrogenio(item.first);
-        }
-    }
+	for (auto item : dados[elemento]) {
 
-    resultados[elemento] = total;
-    return total;
+		if (item.first == "hidrogenio") {
+			total += item.second;
+		}
+		else {
+			total += item.second * calculoHidrogenio(item.first);
+		}
+	}
+
+	resultados[elemento] = total;
+	return total;
 }
 
 int main() {
 
-    std::ifstream file("./casoc360.txt");
-    std::string line;
+	std::ifstream file("./casoc360.txt");
+	std::string line;
 
-    if (!file) {
-        std::cerr << "Erro ao abrir o arquivo." << std::endl;
-        return 1;
-    }
+	if (!file) {
+		std::cerr << "Erro ao abrir o arquivo." << std::endl;
+		return 1;
+	}
 
-    auto start = std::chrono::high_resolution_clock::now();
+	auto start = std::chrono::high_resolution_clock::now();
 
-    while (std::getline(file, line)) {
-        std::istringstream ss(line);
+	while (std::getline(file, line)) {
 
-        std::vector<std::pair<std::string, int>> custos;
-        std::string quantidade;
-        std::string elemento;
+		std::istringstream ss(line);
 
-        while (1) {
-            if (!(ss >> quantidade)) {
-                break;
-            }
+		std::vector<std::pair<std::string, int>> custos;
+		std::string quantidade;
+		std::string elemento;
 
-            if (quantidade != "->") {
-                if (!(ss >> elemento)) {
-                    break;
-                }
-                custos.push_back(std::make_pair(elemento, std::stoi(quantidade)));
-            }
-            else if (!(ss >> quantidade >> elemento)) {
-                break;
-            }
-        }
+		while (1) {
 
-        auto it = dados.find(elemento);
+			if (!(ss >> quantidade)) {
+				break;
+			}
 
-        if (it == dados.end()) {
-            dados[elemento] = custos;
-        }
-        else {
-            it->second.insert(it->second.end(), custos.begin(), custos.end());
-        }
-    }
+			if (quantidade != "->") {
+				if (!(ss >> elemento)) {
+					break;
+				}
+				custos.push_back(std::make_pair(elemento, std::stoi(quantidade)));
+			}
 
-    math::Integer result = calculateHidrogenio("ouro");
+			else if (!(ss >> quantidade >> elemento)) {
+				break;
+			}
+		}
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+		auto it = dados.find(elemento);
 
-    std::cout << result << "\n\n" << std::fixed << std::setprecision(1) << duration.count() << " segundos." << std::endl;
+		if (it == dados.end()) {
+			dados[elemento] = custos;
+		}
+		else {
+			it->second.insert(it->second.end(), custos.begin(), custos.end());
+		}
+	}
 
-    return 0;
+	math::Integer quantHidro = calculoHidrogenio("ouro");
+
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+	std::cout << quantHidro << "\n\n" << std::fixed << std::setprecision(1) << duration.count() << " nanossegundos." << std::endl;
+
+	return 0;
 }
